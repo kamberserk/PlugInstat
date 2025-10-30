@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Folder Organizer</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+  }
+  #folderContainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .folderNode {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 150px;
+    height: 50px;
+    border-radius: 8px;
+    cursor: move;
+    user-select: none;
+    background-color: #eee;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    padding: 5px;
+  }
+  .numberLabel {
+    position: absolute;
+    left: 5px;
+    top: 5px;
+    font-weight: bold;
+  }
+  .removeBtn {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    color: red;
+  }
+  #downloadBtn {
+    margin-top: 20px;
+    padding: 10px 25px;
+    background-color: #FF8C00;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .drag-over {
+    outline: 2px dashed #333;
+  }
+</style>
+</head>
+<body>
+
+<h1>Folder Organizer</h1>
+<input type="file" id="fileInput" accept=".txt,.json"><br>
+<div id="folderContainer"></div>
+<button id="downloadBtn">Download List</button>
+
+<script>
+let folders = [];
+let allowSort = false; // sort only immediately after load; preserve manual order after that
+const groupColors = ['#f4c2c2','#c2f4c2','#c2c2f4','#f4e1c2','#e1c2f4','#c2f4e1','#f4c2e1','#e1f4c2'];
+
+const fileInput = document.getElementById('fileInput');
+const container = document.getElementById('folderContainer');
+const downloadBtn = document.getElementById('downloadBtn');
+
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    let text = event.target.result.trim();
+    try {
+      folders = JSON.parse(text);
+      if (!Array.isArray(folders)) throw new Error();
+    } catch(err) {
+      folders = text.split(',').map(s => s.trim().replace(/^"|"$/g,''));
+    }
+    allowSort = true;     // do one initial sort on fresh load
+    renderFolders();
+    allowSort = false;    // then preserve user drag order
+  };
+  reader.readAsText(file);
+});
+
+function renderFolders() {
+  container.innerHTML = '';
+  if (allowSort) sortFolders();
+
+  const prefixCount = {};
+  folders.forEach(f => {
+    const prefix = f.split(' ')[0].toLowerCase();
+    prefixCount[prefix] = (prefixCount[prefix] || 0) + 1;
+  });
+
+  const groupMap = {};
+  let colorIndex = 0;
+
+  folders.forEach((name, index) => {
+    const div = document.createElement('div');
+    div.className = 'folderNode';
+    div.draggable = true;
+
+    const lower = name.toLowerCase();
+    if (lower.startsWith('transition')) div.style.backgroundColor = '#a2d5f2';
+    else if (lower.startsWith('slob'))  div.style.backgroundColor = '#fce8b2';
+    else if (lower.startsWith('blob'))  div.style.backgroundColor = '#d5f7dc';
+    else {
+      const prefix = name.split(' ')[0].toLowerCase();
+      if (prefixCount[prefix] > 1) {
+        if (!groupMap[prefix]) {
+          groupMap[prefix] = groupColors[colorIndex % groupColors.length];
+          colorIndex++;
+        }
+        div.style.backgroundColor = groupMap[prefix];
+      } else {
+        div.style.backgroundColor = '#eee';
+      }
+    }
+
+    div.innerHTML = `<span class="numberLabel">${index+1}</span>${name}<span class="removeBtn">X</span>`;
+
+    // DnD bindings
+    div.addEventListener('dragstart', dragStart);
+    div.addEventListener('dragover', dragOver);
+    div.addEventListener('drop', drop);
+    div.addEventListener('dragend', dragEnd);
+    div.addEventListener('dragenter', dragEnter);
+    div.addEventListener('dragleave', dragLeave);
+
+    div.querySelector('.removeBtn').addEventListener('click', () => {
+      folders.splice(index, 1);
+      renderFolders();
+    });
+
+    container.appendChild(div);
+  });
+}
+
+function sortFolders() {
+  const transition = [];
+  const slob = [];
+  const blob = [];
+  const others = [];
+
+  folders.forEach(f => {
+    const lower = f.toLowerCase();
+    if (lower.startsWith('transition')) transition.push(f);
+    else if (lower.startsWith('slob'))    slob.push(f);
+    else if (lower.startsWith('blob'))    blob.push(f);
+    else                                  others.push(f);
+  });
+
+  others.sort((a,b) => a.localeCompare(b));
+  folders = [...transition, ...others, ...slob, ...blob];
+}
+
+// Drag & Drop
+let dragged = null;
+
+function dragStart(e) {
+  dragged = e.currentTarget;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', ''); // required for some browsers
+  // Hide while dragging for cleaner visuals; still remains in DOM for index lookup
+  setTimeout(() => { dragged.style.display = 'none'; }, 0);
+}
+
+function dragOver(e) {
+  e.preventDefault();               // allow drop
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function drop(e) {
+  e.preventDefault();
+  if (!dragged) return;
+  
+  // Find the closest folder node in case we hit a child element
+  const target = e.currentTarget.closest ? e.currentTarget : e.target.closest('.folderNode');
+  if (!target || dragged === target) return;
+
+  // compute indices based on current DOM order
+  const items = Array.from(container.children);
+  const draggedIndex = items.indexOf(dragged);
+  const targetIndex  = items.indexOf(target);
+
+  // move in data model
+  folders.splice(targetIndex, 0, folders.splice(draggedIndex, 1)[0]);
+
+  // preserve manual order from now on
+  allowSort = false;
+
+  // re-render
+  renderFolders();
+}
+
+function dragEnd() {
+  if (dragged) {
+    dragged.style.display = 'flex'; // restore element
+    dragged = null;
+  }
+}
+
+function dragEnter(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+
+function dragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+
+// Download
+downloadBtn.addEventListener('click', () => {
+  const lines = folders.map((f,i) => `${i+1},${f}`);
+  const blob = new Blob([lines.join('\n')], {type: 'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'sorted_folders.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+</script>
+
+</body>
+</html>

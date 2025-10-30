@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Plug InStat",
+  "version": "1.0",
+  "description": "Categorizing Hudl Basketball Videos",
+  "icons": {
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.hudl.com/app/metropole/videoplayer/us/external_playlists/*"
+      ],
+      "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["tags.json"],
+      "matches": ["https://www.hudl.com/*"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "PlugInStat - Basketball Video Analysis"
+  }
+}

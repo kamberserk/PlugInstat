@@ -1,0 +1,403 @@
+{
+  "tags": [
+    {
+      "name": "Hammer",
+      "minus": 3,
+      "plus": 5,
+      "shortcut": "Ctrl+H",
+      "type": "Offense"
+    },
+    {
+      "name": "Stagger",
+      "minus": 3,
+      "plus": 5,
+      "shortcut": "",
+      "type": "Offense"
+    },
+    {
+      "name": "Stagger Pitch Back",
+      "minus": 3,
+      "plus": 5,
+      "shortcut": "",
+      "type": "Offense"
+    },
+    {
+      "name": "Iverson Step Up [Dallas Action]",
+      "minus": 3,
+      "plus": 5,
+      "shortcut": "",
+      "type": "Offense"
+    },
+    {
+      "name": "Top PNR",
+      "minus": 2,
+      "plus": 4,
+      "shortcut": "Ctrl+T",
+      "type": "Offense"
+    },
+    {
+      "name": "Diamond",
+      "minus": 1,
+      "plus": 7,
+      "shortcut": "Ctrl+D",
+      "type": "Offense"
+    },
+    {
+      "name": "Spain",
+      "minus": 1,
+      "plus": 7,
+      "shortcut": "Ctrl+S",
+      "type": "Offense"
+    },
+    {
+      "name": "Double Drag",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "d",
+      "type": "Offense"
+    },
+    {
+      "name": "Weak",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "W",
+      "type": "Offense"
+    },
+    {
+      "name": "Strong",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "s",
+      "type": "Offense"
+    },
+    {
+      "name": "Wide",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "w",
+      "type": "Offense"
+    },
+    {
+      "name": "Flex",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "f",
+      "type": "Offense"
+    },
+    {
+      "name": "Zipper",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "z",
+      "type": "Offense"
+    },
+    {
+      "name": "Fist",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "F",
+      "type": "Offense"
+    },
+    {
+      "name": "Zoom",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "Z",
+      "type": "Offense"
+    },
+    {
+      "name": "_BLOB",
+      "minus": 0,
+      "plus": 14,
+      "shortcut": "B",
+      "type": "Offense"
+    },
+    {
+      "name": "_SLOB",
+      "minus": 0,
+      "plus": 14,
+      "shortcut": "_",
+      "type": "Offense"
+    },
+    {
+      "name": "Horns Side",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "h",
+      "type": "Offense"
+    },
+    {
+      "name": "Transition",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": " ",
+      "type": "Offense"
+    },
+    {
+      "name": "Spanoulis",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "p",
+      "type": "Offense"
+    },
+    {
+      "name": "Continuous PNR",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "8",
+      "type": "Offense"
+    },
+    {
+      "name": "Pistol",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "P",
+      "type": "Offense"
+    },
+    {
+      "name": "Iverson",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "i",
+      "type": "Offense"
+    },
+    {
+      "name": "Ghost",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "g",
+      "type": "Offense"
+    },
+    {
+      "name": "Twirl",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "t",
+      "type": "Offense"
+    },
+    {
+      "name": "Chin",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "c",
+      "type": "Offense"
+    },
+    {
+      "name": "Shuffle",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "ş",
+      "type": "Offense"
+    },
+    {
+      "name": "StepUp",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "u",
+      "type": "Offense"
+    },
+    {
+      "name": "__BOOK",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "-",
+      "type": "Offense"
+    },
+    {
+      "name": "Floppy",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "v",
+      "type": "Offense"
+    },
+    {
+      "name": "Horns",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": ",",
+      "type": "Offense"
+    },
+    {
+      "name": "Side PNR",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "e",
+      "type": "Offense"
+    },
+    {
+      "name": "PressBreak",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "ü",
+      "type": "Defence"
+    },
+    {
+      "name": "Rotation",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "r",
+      "type": "Defence"
+    },
+    {
+      "name": "Under ",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "U",
+      "type": "PNR Coverages"
+    },
+    {
+      "name": "Drop",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "D",
+      "type": "PNR Coverages"
+    },
+    {
+      "name": "Ice",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "ı",
+      "type": "PNR Coverages"
+    },
+    {
+      "name": "Refuse",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "y",
+      "type": "PNR Coverages"
+    },
+    {
+      "name": "Hard Hedge",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "\"",
+      "type": "PNR Coverages"
+    },
+    {
+      "name": "45Cut",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "4",
+      "type": "Offense"
+    },
+    {
+      "name": "AgainstZone",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "A",
+      "type": "Offense"
+    },
+    {
+      "name": "Pick N Pop",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "1",
+      "type": "Defence"
+    },
+    {
+      "name": "Score",
+      "minus": 12,
+      "plus": 3,
+      "shortcut": "",
+      "type": "Actions"
+    },
+    {
+      "name": "Assist",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "",
+      "type": "Actions"
+    },
+    {
+      "name": "Steal",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "",
+      "type": "Actions"
+    },
+    {
+      "name": "TurnOver",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "",
+      "type": "Actions"
+    },
+    {
+      "name": "Defensive Rebound",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "",
+      "type": "Actions"
+    },
+    {
+      "name": "Offensive Rebound",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "",
+      "type": "Actions"
+    },
+    {
+      "name": "Cross Screen",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "",
+      "type": "Fundamental"
+    },
+    {
+      "name": "Backdoor",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "",
+      "type": "Fundamental"
+    },
+    {
+      "name": "Front Cut",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "",
+      "type": "Fundamental"
+    },
+    {
+      "name": "V Cut",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "",
+      "type": "Fundamental"
+    },
+    {
+      "name": "L Cut",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "",
+      "type": "Fundamental"
+    },
+    {
+      "name": "Score",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "",
+      "type": "Fundamental"
+    },
+    {
+      "name": "Pick2Picker",
+      "minus": 8,
+      "plus": 8,
+      "shortcut": "ğ",
+      "type": "Offense"
+    },
+    {
+      "name": "Blind Pig",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "2",
+      "type": "Offense"
+    },
+    {
+      "name": "weave",
+      "minus": 10,
+      "plus": 10,
+      "shortcut": "3",
+      "type": "Offense"
+    }
+  ]
+}
