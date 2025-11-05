@@ -244,15 +244,17 @@ function createPopup() {
         cell.appendChild(input);
     });
 
-    // Generate button row
-    const br = table.insertRow();
+
+    // Use existing row and cell if they already exist
+    let br = table.insertRow();
     br.style.backgroundColor = "#f8f9fa";
-    const bc = br.insertCell();
+    let bc = br.insertCell();
     bc.colSpan = 2;
     bc.style.padding = "12px 0";
     bc.style.textAlign = "center";
     bc.style.border = "none";
 
+    // === ORANGE BUTTON: Generate TXT File ===
     const generateBtn = popup.document.createElement("button");
     generateBtn.innerText = "Generate File";
     generateBtn.style.backgroundColor = "orange";
@@ -263,6 +265,26 @@ function createPopup() {
     generateBtn.style.cursor = "pointer";
     generateBtn.style.width = "260px";
     bc.appendChild(generateBtn);
+
+    // Spacer between buttons
+    const spacer = popup.document.createElement("div");
+    spacer.style.height = "8px";
+    bc.appendChild(spacer);
+
+    // === GRAY BUTTON: Download Organizer Script ===
+    const downloadBtn = popup.document.createElement("button");
+    downloadBtn.innerText = "Download MACOS Organizer Script";
+    downloadBtn.style.backgroundColor = "#555";
+    downloadBtn.style.color = "white";
+    downloadBtn.style.padding = "6px 20px";
+    downloadBtn.style.border = "none";
+    downloadBtn.style.borderRadius = "4px";
+    downloadBtn.style.cursor = "pointer";
+    downloadBtn.style.width = "260px";
+    bc.appendChild(downloadBtn);
+
+
+
 
     // ---------- autocomplete ----------
     let allTags = [];
@@ -281,33 +303,33 @@ function createPopup() {
         inputs.forEach(input => {
             input.addEventListener("input", function () {
                 const val = this.value.toLowerCase();
-    
+
                 // 1. Collect values already used in other textboxes
                 const existingValues = Array.from(inputs)
                     .filter(i => i !== this && i.value.trim() !== "")
                     .map(i => i.value.trim());
-    
+
                 // 2. Suggestions from tags.json that start with current text
                 const tagSuggestions = allTags.filter(tag =>
                     tag.toLowerCase().startsWith(val) &&
                     !existingValues.some(ev => ev.toLowerCase() === tag.toLowerCase())
                 );
-    
+
                 // 3. Suggestions from other textbox values that start with current text
                 const reuseSuggestions = existingValues.filter(ev =>
                     ev.toLowerCase().startsWith(val)
                 );
-    
+
                 // 4. Merge and deduplicate
                 const allSuggestions = [...new Set([...reuseSuggestions, ...tagSuggestions])];
-    
+
                 const closeAll = () => {
                     const els = popup.document.getElementsByClassName("autocomplete-items");
                     while (els.length) els[0].remove();
                 };
                 closeAll();
                 if (!val || allSuggestions.length === 0) return;
-    
+
                 const list = popup.document.createElement("div");
                 list.classList.add("autocomplete-items");
                 list.style.border = "1px solid #d4d4d4";
@@ -315,7 +337,7 @@ function createPopup() {
                 list.style.background = "#fff";
                 list.style.zIndex = 9999;
                 list.style.width = this.offsetWidth + "px";
-    
+
                 allSuggestions.forEach(s => {
                     const item = popup.document.createElement("div");
                     item.innerHTML = s;
@@ -326,9 +348,9 @@ function createPopup() {
                     });
                     list.appendChild(item);
                 });
-    
+
                 this.parentNode.appendChild(list);
-    
+
                 let currentFocus = -1;
                 this.addEventListener("keydown", function (e) {
                     const items = list.getElementsByTagName("div");
@@ -347,12 +369,12 @@ function createPopup() {
                         if (currentFocus > -1) items[currentFocus].click();
                     }
                 });
-    
+
                 popup.document.addEventListener("click", () => closeAll());
             });
         });
     }
-    
+
     setupAutocomplete();
 
     // ---------- export ----------
@@ -381,6 +403,43 @@ function createPopup() {
         a.download = "video_text.txt";
         a.click();
     });
+
+    downloadBtn.addEventListener("click", async () => {
+        try {
+            const url = "https://raw.githubusercontent.com/kamberserk/PlugInstat/main/macOS/1_Organize%20Videos/organize_videos.sh";
+
+            // 1. fetch the script
+            const resp = await fetch(url);
+            if (!resp.ok) {
+                alert("Could not download script (HTTP " + resp.status + ")");
+                return;
+            }
+
+            // 2. turn it into a blob
+            const text = await resp.text();
+            const blob = new Blob([text], { type: "text/x-sh" });
+
+            // 3. create a temporary download link
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "organize_videos.sh";
+            a.style.display = "none";
+            document.body.appendChild(a);
+
+            // 4. click it programmatically
+            a.click();
+
+            // 5. cleanup
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+        } catch (e) {
+            console.error(e);
+            alert("Download failed.");
+        }
+    });
+
+
+
 }
 
 // add button to page

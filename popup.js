@@ -7,4 +7,14 @@ document.addEventListener('DOMContentLoaded', function() {
             chrome.tabs.create({url: 'https://youtube.com/@coach_mert?sub_confirmation=1'});
         });
     }
-}); 
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    // YouTube link functionality
+    const youtubeButton = document.getElementById('githubLink');
+    if (youtubeButton) {
+        youtubeButton.addEventListener('click', function() {
+            chrome.tabs.create({url: 'https://github.com/kamberserk/PlugInstat'});
+        });
+    }
+});
