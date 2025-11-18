@@ -292,6 +292,7 @@ function createPopup() {
     downloadBtnW.style.borderRadius = "4px";
     downloadBtnW.style.cursor = "pointer";
     downloadBtnW.style.width = "260px";
+    downloadBtnW.style.marginTop = "10px";
     bc.appendChild(downloadBtnW);
 
 
@@ -415,7 +416,7 @@ function createPopup() {
 
     downloadBtn.addEventListener("click", async () => {
         try {
-            const url = "https://raw.githubusercontent.com/kamberserk/PlugInstat/main/_macOS/1_Organize%20Videos/organize_videos.sh";
+            const url = "https://raw.githubusercontent.com/kamberserk/PlugInstat/main/macOS_scripts/1_Organize%20Videos/organize_videos.sh";
 
             // 1. fetch the script
             const resp = await fetch(url);
@@ -451,7 +452,7 @@ function createPopup() {
 
     downloadBtnW.addEventListener("click", async () => {
         try {
-            const url = "https://raw.githubusercontent.com/kamberserk/PlugInstat/main/_windows/1_Organize%20Videos/organize_videos.bat";
+            const url = "https://raw.githubusercontent.com/kamberserk/PlugInstat/main/windows_scripts/1_Organize%20Videos/organize_videos.bat";
 
             const resp = await fetch(url);
             if (!resp.ok) {
