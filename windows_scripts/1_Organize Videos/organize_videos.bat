@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
-echo === Video File Organizer (Windows .bat) ===
+echo === Video File Organizer (Windows .bat, time-based only) ===
 echo.
 
 rem --- verify inputs ---
@@ -34,29 +34,18 @@ for /f "usebackq tokens=1-3 delims=|" %%A in ("video_text.txt") do (
   rem skip lines without a setplay name
   if not "!setplay!"=="" (
 
-    rem ---- build main pattern from full timeslot ----
-    rem Example timeslot: 1st quarter , 14:19 - 14:46
+    rem ---- build pattern from full timeslot (like in .sh) ----
+    rem Example: "1st quarter , 14:19 - 14:46"
     rem 1) " , " -> "_"
-    rem 2) spaces  -> "_"
-    rem 3) ":"      -> "_"
+    rem 2) spaces -> "_"
+    rem 3) ":"     -> "_"
     set "pattern=!timeslot!"
     set "pattern=!pattern: , =_!"
     set "pattern=!pattern: =_!"
     set "pattern=!pattern::=_!"
 
-    rem also: quarter-only helpers (same idea your .sh likely uses)
-    rem quarter = part before comma
-    set "quarter="
-    for /f "tokens=1* delims=," %%Q in ("!timeslot!") do (
-      set "quarter=%%Q"
-    )
-    set "quarter_underscore=!quarter: =_!"
-    set "quarter_nospace=!quarter: =!"
-
     echo ID=!id! ^| Timeslot=!timeslot! ^| SetPlay=!setplay!
-    echo   Pattern from timeslot : !pattern!
-    echo   Quarter "_" pattern   : !quarter_underscore!
-    echo   Quarter nospace       : !quarter_nospace!
+    echo   Pattern from timeslot: !pattern!
 
     rem ---- ensure destination folder exists ----
     if not exist "!setplay!" (
@@ -72,25 +61,15 @@ for /f "usebackq tokens=1-3 delims=|" %%A in ("video_text.txt") do (
       echo   = Folder exists: "!setplay!"
     )
 
-    rem ---- scan mp4 files and move matches ----
+    rem ---- scan mp4 files and move matches (time-based only) ----
     set "foundAny="
 
     for /f "delims=" %%F in ('dir /b "*.mp4" 2^>nul') do (
       set "FNAME=%%F"
       set "hit="
 
-      rem main: full timeslot-derived pattern
       if not "!pattern!"=="" (
         echo "%%F" | find /I "!pattern!" >nul && set "hit=1"
-      )
-
-      rem fallback: quarter patterns, in case filenames only use the quarter part
-      if not defined hit if not "!quarter_underscore!"=="" (
-        echo "%%F" | find /I "!quarter_underscore!" >nul && set "hit=1"
-      )
-
-      if not defined hit if not "!quarter_nospace!"=="" (
-        echo "%%F" | find /I "!quarter_nospace!" >nul && set "hit=1"
       )
 
       if defined hit (
