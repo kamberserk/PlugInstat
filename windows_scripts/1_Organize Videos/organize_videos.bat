@@ -56,15 +56,13 @@ exit /b 0
 
 rem =================== process one line ===================
 :processLine
-setlocal EnableDelayedExpansion
-
 set "line=%~1"
-if "!line!"=="" (
-  endlocal & goto :eof
+if "%line%"=="" (
+  goto :eof
 )
 
 rem id|timeslot|setplay
-for /f "tokens=1-3 delims=|" %%A in ("!line!") do (
+for /f "tokens=1-3 delims=|" %%A in ("%line%") do (
   set "id=%%~A"
   set "timeslot=%%~B"
   set "setplay=%%~C"
@@ -75,7 +73,7 @@ call :trim setplay setplay
 if "!setplay!"=="" (
   echo Skipping (empty set play): !line!
   echo.
-  endlocal & goto :eof
+  goto :eof
 )
 
 rem ---- split timeslot: "1st quarter , 01:16 - 01:30" ----
@@ -139,7 +137,7 @@ if not exist "!setplay!\" (
     echo   x Failed to create folder "!setplay!"
     set /a errors+=1
     echo.
-    endlocal & goto :eof
+    goto :eof
   ) else (
     echo   + Created folder "!setplay!"
     set /a folders_created+=1
@@ -153,27 +151,18 @@ set "foundAny="
 
 for /f "delims=" %%F in ('dir /b "*.mp4" 2^>nul') do (
   set "FNAME=%%F"
-  set "UP=!FNAME!"
-  call :toUpper UP
-
   set "hit="
 
   if defined normalized_pattern (
-    set "P1=!normalized_pattern!"
-    call :toUpper P1
-    call :contains "!UP!" "!P1!" hit
+    echo "%%F" | find /I "!normalized_pattern!" >nul && set "hit=1"
   )
 
-  if "!hit!"=="" (
-    set "P2=!quarter_underscore!"
-    call :toUpper P2
-    call :contains "!UP!" "!P2!" hit
+  if not defined hit (
+    echo "%%F" | find /I "!quarter_underscore!" >nul && set "hit=1"
   )
 
-  if "!hit!"=="" (
-    set "P3=!quarter_no_space!"
-    call :toUpper P3
-    call :contains "!UP!" "!P3!" hit
+  if not defined hit (
+    echo "%%F" | find /I "!quarter_no_space!" >nul && set "hit=1"
   )
 
   if defined hit (
@@ -196,7 +185,7 @@ if not defined foundAny (
 )
 
 echo.
-endlocal & goto :eof
+goto :eof
 
 
 rem =================== helpers ===================
@@ -209,25 +198,4 @@ for /f "tokens=* delims= " %%T in ("!s!") do set "s=%%T"
 :trimLoop
 if "!s:~-1!"==" " set "s=!s:~0,-1!" & goto :trimLoop
 endlocal & set "%~2=%s%"
-goto :eof
-
-:toUpper
-rem Usage: call :toUpper varName
-setlocal EnableDelayedExpansion
-set "s=!%~1!"
-for %%A in (a=A b=B c=C d=D e=E f=F g=G h=H i=I j=J k=K l=L m=M n=N o=O p=P q=Q r=R s=S t=T u=U v=V w=W x=X y=Y z=Z) do set "s=!s:%%A=%%B!"
-endlocal & set "%~1=%s%"
-goto :eof
-
-:contains
-rem Usage: call :contains "HAYSTACK" "NEEDLE" outVar
-setlocal EnableDelayedExpansion
-set "H=%~1"
-set "N=%~2"
-set "o="
-if not "!N!"=="" (
-  set "tmp=!H:%~2=!"
-  if not "!tmp!"=="!H!" set "o=1"
-)
-endlocal & set "%~3=%o%"
 goto :eof
