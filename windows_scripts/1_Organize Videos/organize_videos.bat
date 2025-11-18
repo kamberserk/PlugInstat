@@ -24,44 +24,58 @@ set /a errors=0
 echo Processing video_text.txt...
 echo.
 
-rem === main loop: parse directly, no subroutines ===
+rem === main loop: parse each line directly ===
 for /f "usebackq tokens=1-3 delims=|" %%A in ("video_text.txt") do (
   set "id=%%A"
   set "timeslot=%%B"
   set "setplay=%%C"
 
-  rem skip lines without a setplay name
-  if not "!setplay!"=="" (
+  rem Skip if setplay is empty
+  if not "%%C"=="" (
 
-    rem ---- split timeslot by first comma to get the quarter part ----
-    rem example timeslot: "1st quarter , 01:16 - 01:30"
-    set "quarter_part="
-    set "time_part="
+    rem ---- split timeslot into quarter and time range ----
+    rem Example timeslot: 1st quarter , 01:16 - 01:30
+    set "quarter="
+    set "timerange="
 
-    for /f "tokens=1* delims=," %%Q in ("!timeslot!") do (
-      set "quarter_part=%%Q"
-      set "time_part=%%R"
+    for /f "tokens=1* delims=," %%D in ("%%B") do (
+      set "quarter=%%D"
+      set "timerange=%%E"
     )
 
-    rem normalize quarter variants
-    set "quarter_underscore=!quarter_part: =_!"
-    set "quarter_no_space=!quarter_part: =!"
+    rem quarter variants for matching filenames
+    set "quarter_underscore=!quarter: =_!"
+    set "quarter_nospace=!quarter: =!"
 
-    rem normalize full timeslot to something filesystem-ish:
-    rem   1) remove spaces
-    rem   2) replace commas with underscores
-    rem   3) replace colons with underscores
-    rem   4) replace hyphens with _-_
-    set "normalized_pattern=!timeslot!"
-    set "normalized_pattern=!normalized_pattern: =!"
-    set "normalized_pattern=!normalized_pattern:,=_!"
-    set "normalized_pattern=!normalized_pattern::=_!"
-    set "normalized_pattern=!normalized_pattern:-=_-_!"
+    rem ---- parse timerange " 01:16 - 01:30" into mm ss mm ss ----
+    rem delimiters: space, colon, hyphen
+    set "pattern="
+    for /f "tokens=1,2,3,4 delims=: -" %%H in ("!timerange!") do (
+      set "sm=%%H"
+      set "ss=%%I"
+      set "em=%%J"
+      set "es=%%K"
+    )
+
+    rem remove any leading zeros by simple arithmetic (if numeric)
+    if defined sm set /a sm=1!sm! - 0 >nul 2>nul
+    if defined ss set /a ss=1!ss! - 0 >nul 2>nul
+    if defined em set /a em=1!em! - 0 >nul 2>nul
+    if defined es set /a es=1!es! - 0 >nul 2>nul
+
+    rem if they became empty or non-numeric, leave as-is
+    if defined sm if defined ss if defined em if defined es (
+      set "pattern=!sm!_!ss!_-_!em!_!es!"
+    )
 
     echo ID=!id! ^| Timeslot=!timeslot! ^| SetPlay=!setplay!
-    echo   Pattern (time): !normalized_pattern!
-    echo   Quarter "_": !quarter_underscore!
-    echo   Quarter "nospace": !quarter_no_space!
+    if defined pattern (
+      echo   Time pattern : !pattern!
+    ) else (
+      echo   Time pattern : (not parsed from "!timeslot!")
+    )
+    echo   Quarter "_"   : !quarter_underscore!
+    echo   Quarter nospc: !quarter_nospace!
 
     rem ---- ensure destination folder exists ----
     if not exist "!setplay!\" (
@@ -84,19 +98,16 @@ for /f "usebackq tokens=1-3 delims=|" %%A in ("video_text.txt") do (
       set "FNAME=%%F"
       set "hit="
 
-      rem check normalized full pattern
-      if not "!normalized_pattern!"=="" (
-        echo "%%F" | find /I "!normalized_pattern!" >nul && set "hit=1"
+      if defined pattern (
+        echo "%%F" | find /I "!pattern!" >nul && set "hit=1"
       )
 
-      rem check quarter underscore
       if not defined hit if not "!quarter_underscore!"=="" (
         echo "%%F" | find /I "!quarter_underscore!" >nul && set "hit=1"
       )
 
-      rem check quarter no-space
-      if not defined hit if not "!quarter_no_space!"=="" (
-        echo "%%F" | find /I "!quarter_no_space!" >nul && set "hit=1"
+      if not defined hit if not "!quarter_nospace!"=="" (
+        echo "%%F" | find /I "!quarter_nospace!" >nul && set "hit=1"
       )
 
       if defined hit (
