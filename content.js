@@ -283,7 +283,16 @@ function createPopup() {
     downloadBtn.style.width = "260px";
     bc.appendChild(downloadBtn);
 
-
+    const downloadBtnW = popup.document.createElement("button");
+    downloadBtnW.innerText = "Download Windows Organizer Script";
+    downloadBtnW.style.backgroundColor = "#555";
+    downloadBtnW.style.color = "white";
+    downloadBtnW.style.padding = "6px 20px";
+    downloadBtnW.style.border = "none";
+    downloadBtnW.style.borderRadius = "4px";
+    downloadBtnW.style.cursor = "pointer";
+    downloadBtnW.style.width = "260px";
+    bc.appendChild(downloadBtnW);
 
 
     // ---------- autocomplete ----------
@@ -406,7 +415,7 @@ function createPopup() {
 
     downloadBtn.addEventListener("click", async () => {
         try {
-            const url = "https://raw.githubusercontent.com/kamberserk/PlugInstat/main/macOS/1_Organize%20Videos/organize_videos.sh";
+            const url = "https://raw.githubusercontent.com/kamberserk/PlugInstat/main/_macOS/1_Organize%20Videos/organize_videos.sh";
 
             // 1. fetch the script
             const resp = await fetch(url);
@@ -437,6 +446,38 @@ function createPopup() {
             alert("Download failed.");
         }
     });
+
+
+
+    downloadBtnW.addEventListener("click", async () => {
+        try {
+            const url = "https://raw.githubusercontent.com/kamberserk/PlugInstat/main/_windows/1_Organize%20Videos/organize_videos.bat";
+
+            const resp = await fetch(url);
+            if (!resp.ok) {
+                alert("Could not download script (HTTP " + resp.status + ")");
+                return;
+            }
+
+            const text = await resp.text();
+            const blob = new Blob([text], { type: "application/octet-stream" }); // FIXED HERE
+
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "organize_videos.bat";
+            a.style.display = "none";
+            document.body.appendChild(a);
+
+            a.click();
+
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+        } catch (e) {
+            console.error(e);
+            alert("Download failed.");
+        }
+    });
+
 
 
 
