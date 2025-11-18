@@ -9,7 +9,8 @@
   "content_scripts": [
     {
       "matches": [
-        "https://www.hudl.com/app/metropole/videoplayer/us/external_playlists/*"
+        "https://www.hudl.com/app/metropole/videoplayer/us/external_playlists/*",
+        "https://www.hudl.com/app/metropole/videoplayer/external_playlists/*"
       ],
       "js": ["content.js"]
     }
