@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
-echo === Video File Organizer (Windows .bat, time-based only) ===
+echo === Video File Organizer (Windows .bat, robust timestamps) ===
 echo.
 
 rem --- verify inputs ---
@@ -34,18 +34,72 @@ for /f "usebackq tokens=1-3 delims=|" %%A in ("video_text.txt") do (
   rem skip lines without a setplay name
   if not "!setplay!"=="" (
 
-    rem ---- build pattern from full timeslot (like in .sh) ----
-    rem Example: "1st quarter , 14:19 - 14:46"
+    rem ---- pattern_full from entire timeslot (like .sh) ----
+    rem Example: "1st quarter , 06:18 - 06:40"
     rem 1) " , " -> "_"
     rem 2) spaces -> "_"
     rem 3) ":"     -> "_"
-    set "pattern=!timeslot!"
-    set "pattern=!pattern: , =_!"
-    set "pattern=!pattern: =_!"
-    set "pattern=!pattern::=_!"
+    set "pattern_full=!timeslot!"
+    set "pattern_full=!pattern_full: , =_!"
+    set "pattern_full=!pattern_full: =_!"
+    set "pattern_full=!pattern_full::=_!"
+
+    rem ---- extract timerange and build time-only patterns ----
+    rem split timeslot at comma: left = quarter, right = " 06:18 - 06:40"
+    set "timerange="
+    for /f "tokens=1* delims=," %%Q in ("!timeslot!") do (
+      set "timerange=%%R"
+    )
+
+    rem clean " 06:18 - 06:40" -> "06:18-06:40"
+    set "tr=!timerange!"
+    set "tr=!tr: - =-!"
+
+    rem split start/end around '-'
+    set "start="
+    set "end="
+    for /f "tokens=1,2 delims=-" %%T in ("!tr!") do (
+      set "start=%%T"
+      set "end=%%U"
+    )
+
+    rem parse mm:ss for start/end (spaces and ':' as delimiters)
+    set "sm=" & set "ss=" & set "em=" & set "es="
+    for /f "tokens=1,2 delims= :" %%M in ("!start!") do (
+      set "sm=%%M"
+      set "ss=%%N"
+    )
+    for /f "tokens=1,2 delims= :" %%M in ("!end!") do (
+      set "em=%%M"
+      set "es=%%N"
+    )
+
+    rem time-only patterns
+    set "pattern_time1="
+    if not "!sm!"=="" if not "!ss!"=="" if not "!em!"=="" if not "!es!"=="" (
+      set "pattern_time1=!sm!_!ss!_-_!em!_!es!"
+    )
+
+    rem same but without leading zeros on each component
+    set "sm2=!sm!"
+    set "ss2=!ss!"
+    set "em2=!em!"
+    set "es2=!es!"
+
+    if defined sm2 if "!sm2:~0,1!"=="0" set "sm2=!sm2:~1!"
+    if defined ss2 if "!ss2:~0,1!"=="0" set "ss2=!ss2:~1!"
+    if defined em2 if "!em2:~0,1!"=="0" set "em2=!em2:~1!"
+    if defined es2 if "!es2:~0,1!"=="0" set "es2=!es2:~1!"
+
+    set "pattern_time2="
+    if not "!sm2!"=="" if not "!ss2!"=="" if not "!em2!"=="" if not "!es2!"=="" (
+      set "pattern_time2=!sm2!_!ss2!_-_!em2!_!es2!"
+    )
 
     echo ID=!id! ^| Timeslot=!timeslot! ^| SetPlay=!setplay!
-    echo   Pattern from timeslot: !pattern!
+    echo   pattern_full  : !pattern_full!
+    if defined pattern_time1 echo   pattern_time1: !pattern_time1!
+    if defined pattern_time2 echo   pattern_time2: !pattern_time2!
 
     rem ---- ensure destination folder exists ----
     if not exist "!setplay!" (
@@ -61,15 +115,26 @@ for /f "usebackq tokens=1-3 delims=|" %%A in ("video_text.txt") do (
       echo   = Folder exists: "!setplay!"
     )
 
-    rem ---- scan mp4 files and move matches (time-based only) ----
+    rem ---- scan mp4 files and move matches ----
     set "foundAny="
 
     for /f "delims=" %%F in ('dir /b "*.mp4" 2^>nul') do (
       set "FNAME=%%F"
       set "hit="
 
-      if not "!pattern!"=="" (
-        echo "%%F" | find /I "!pattern!" >nul && set "hit=1"
+      rem 1) match full timeslot pattern
+      if defined pattern_full (
+        echo "%%F" | find /I "!pattern_full!" >nul && set "hit=1"
+      )
+
+      rem 2) match time-only pattern with zeros
+      if not defined hit if defined pattern_time1 (
+        echo "%%F" | find /I "!pattern_time1!" >nul && set "hit=1"
+      )
+
+      rem 3) match time-only pattern without leading zeros
+      if not defined hit if defined pattern_time2 (
+        echo "%%F" | find /I "!pattern_time2!" >nul && set "hit=1"
       )
 
       if defined hit (
