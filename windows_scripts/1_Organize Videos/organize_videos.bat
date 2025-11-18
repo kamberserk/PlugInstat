@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
-echo === Video File Organizer (pure CMD) ===
+echo === Video File Organizer (pure CMD, no labels) ===
 echo.
 
 rem --- verify inputs ---
@@ -24,115 +24,101 @@ set /a errors=0
 echo Processing video_text.txt...
 echo.
 
-rem === main loop: process each line directly ===
-for /f "usebackq delims=" %%L in ("video_text.txt") do (
-  set "line=%%L"
-  if not "!line!"=="" (
+rem === main loop: parse directly, no subroutines ===
+for /f "usebackq tokens=1-3 delims=|" %%A in ("video_text.txt") do (
+  set "id=%%A"
+  set "timeslot=%%B"
+  set "setplay=%%C"
 
-    rem id|timeslot|setplay
-    for /f "tokens=1-3 delims=|" %%A in ("!line!") do (
-      set "id=%%~A"
-      set "timeslot=%%~B"
-      set "setplay=%%~C"
+  rem skip lines without a setplay name
+  if not "!setplay!"=="" (
+
+    rem ---- split timeslot by first comma to get the quarter part ----
+    rem example timeslot: "1st quarter , 01:16 - 01:30"
+    set "quarter_part="
+    set "time_part="
+
+    for /f "tokens=1* delims=," %%Q in ("!timeslot!") do (
+      set "quarter_part=%%Q"
+      set "time_part=%%R"
     )
 
-    call :trim setplay setplay
+    rem normalize quarter variants
+    set "quarter_underscore=!quarter_part: =_!"
+    set "quarter_no_space=!quarter_part: =!"
 
-    if "!setplay!"=="" (
-      echo Skipping (empty set play): !line!
-      echo.
+    rem normalize full timeslot to something filesystem-ish:
+    rem   1) remove spaces
+    rem   2) replace commas with underscores
+    rem   3) replace colons with underscores
+    rem   4) replace hyphens with _-_
+    set "normalized_pattern=!timeslot!"
+    set "normalized_pattern=!normalized_pattern: =!"
+    set "normalized_pattern=!normalized_pattern:,=_!"
+    set "normalized_pattern=!normalized_pattern::=_!"
+    set "normalized_pattern=!normalized_pattern:-=_-_!"
+
+    echo ID=!id! ^| Timeslot=!timeslot! ^| SetPlay=!setplay!
+    echo   Pattern (time): !normalized_pattern!
+    echo   Quarter "_": !quarter_underscore!
+    echo   Quarter "nospace": !quarter_no_space!
+
+    rem ---- ensure destination folder exists ----
+    if not exist "!setplay!\" (
+      mkdir "!setplay!" 2>nul
+      if errorlevel 1 (
+        echo   x Failed to create folder "!setplay!"
+        set /a errors+=1
+      ) else (
+        echo   + Created folder "!setplay!"
+        set /a folders_created+=1
+      )
     ) else (
+      echo   = Folder exists: "!setplay!"
+    )
 
-      rem ---- split timeslot: "1st quarter , 01:16 - 01:30" ----
-      set "quarter_part="
-      set "time_part="
+    rem ---- scan mp4 files and move matches ----
+    set "foundAny="
 
-      for /f "tokens=1* delims=," %%Q in ("!timeslot!") do (
-        set "quarter_part=%%~Q"
-        set "time_part=%%~R"
-      )
-      call :trim quarter_part quarter_part
-      call :trim time_part time_part
+    for /f "delims=" %%F in ('dir /b "*.mp4" 2^>nul') do (
+      set "FNAME=%%F"
+      set "hit="
 
-      rem ---- build normalized time pattern from time_part ----
-      rem Example: "01:16 - 01:30"
-      rem 1) remove spaces -> "01:16-01:30"
-      rem 2) replace ":" with "_" -> "01_16-01_30"
-      rem 3) replace "-" with "_-_" -> "01_16_-_01_30"
-      set "normalized_pattern="
-      if not "!time_part!"=="" (
-        set "normalized_pattern=!time_part: =!"
-        set "normalized_pattern=!normalized_pattern::=_!"
-        set "normalized_pattern=!normalized_pattern:-=_-_!"
+      rem check normalized full pattern
+      if not "!normalized_pattern!"=="" (
+        echo "%%F" | find /I "!normalized_pattern!" >nul && set "hit=1"
       )
 
-      rem quarter variants
-      set "quarter_underscore=!quarter_part: =_!"
-      set "quarter_no_space=!quarter_part: =!"
-
-      echo ID=!id! ^| Timeslot=!timeslot! ^| SetPlay=!setplay!
-      if defined normalized_pattern (
-        echo   Pattern (time): !normalized_pattern!
-      ) else (
-        echo   (No valid time pattern parsed from "!timeslot!")
-      )
-      echo   Quarter variants: "_": !quarter_underscore!   "nospace": !quarter_no_space!
-
-      rem ---- ensure destination folder exists ----
-      if not exist "!setplay!\" (
-        mkdir "!setplay!" 2>nul
-        if errorlevel 1 (
-          echo   x Failed to create folder "!setplay!"
-          set /a errors+=1
-          echo.
-        ) else (
-          echo   + Created folder "!setplay!"
-          set /a folders_created+=1
-        )
-      ) else (
-        echo   = Folder exists: "!setplay!"
+      rem check quarter underscore
+      if not defined hit if not "!quarter_underscore!"=="" (
+        echo "%%F" | find /I "!quarter_underscore!" >nul && set "hit=1"
       )
 
-      rem ---- scan mp4 files and move matches ----
-      set "foundAny="
+      rem check quarter no-space
+      if not defined hit if not "!quarter_no_space!"=="" (
+        echo "%%F" | find /I "!quarter_no_space!" >nul && set "hit=1"
+      )
 
-      for /f "delims=" %%F in ('dir /b "*.mp4" 2^>nul') do (
-        set "FNAME=%%F"
-        set "hit="
-
-        if defined normalized_pattern (
-          echo "%%F" | find /I "!normalized_pattern!" >nul && set "hit=1"
-        )
-
-        if not defined hit if not "!quarter_underscore!"=="" (
-          echo "%%F" | find /I "!quarter_underscore!" >nul && set "hit=1"
-        )
-
-        if not defined hit if not "!quarter_no_space!"=="" (
-          echo "%%F" | find /I "!quarter_no_space!" >nul && set "hit=1"
-        )
-
-        if defined hit (
-          if exist "%%F" (
-            echo     -> moving "%%F" to "!setplay!\"
-            move /y "%%F" "!setplay!\">nul
-            if errorlevel 1 (
-              echo        x Failed to move "%%F"
-              set /a errors+=1
-            ) else (
-              set /a files_moved+=1
-              set "foundAny=1"
-            )
+      if defined hit (
+        if exist "%%F" (
+          echo     -> moving "%%F" to "!setplay!\"
+          move /y "%%F" "!setplay!\">nul
+          if errorlevel 1 (
+            echo        x Failed to move "%%F"
+            set /a errors+=1
+          ) else (
+            set /a files_moved+=1
+            set "foundAny=1"
           )
         )
       )
-
-      if not defined foundAny (
-        echo   (No MP4 file matched the patterns for this line)
-      )
-
-      echo.
     )
+
+    if not defined foundAny (
+      echo   (No MP4 file matched the patterns for this line)
+    )
+
+    echo.
   )
 )
 
@@ -158,17 +144,5 @@ for /d %%D in (*) do (
 
 echo.
 echo Done.
+endlocal
 exit /b 0
-
-
-rem =================== helpers ===================
-
-:trim
-rem Usage: call :trim sourceVar destVar
-setlocal EnableDelayedExpansion
-set "s=!%~1!"
-for /f "tokens=* delims= " %%T in ("!s!") do set "s=%%T"
-:trimLoop
-if "!s:~-1!"==" " set "s=!s:~0,-1!" & goto :trimLoop
-endlocal & set "%~2=%s%"
-goto :eof
