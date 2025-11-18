@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
-echo === Video File Organizer (Windows .bat, robust timestamps) ===
+echo === Video File Organizer (timestamp-based, handles leading zeros) ===
 echo.
 
 rem --- verify inputs ---
@@ -34,129 +34,100 @@ for /f "usebackq tokens=1-3 delims=|" %%A in ("video_text.txt") do (
   rem skip lines without a setplay name
   if not "!setplay!"=="" (
 
-    rem ---- pattern_full from entire timeslot (like .sh) ----
-    rem Example: "1st quarter , 06:18 - 06:40"
-    rem 1) " , " -> "_"
-    rem 2) spaces -> "_"
-    rem 3) ":"     -> "_"
-    set "pattern_full=!timeslot!"
-    set "pattern_full=!pattern_full: , =_!"
-    set "pattern_full=!pattern_full: =_!"
-    set "pattern_full=!pattern_full::=_!"
+    rem ---- split timeslot into quarter and time range ----
+    rem Example: 1st quarter , 06:18 - 06:40
+    set "quarter_part="
+    set "time_part="
 
-    rem ---- extract timerange and build time-only patterns ----
-    rem split timeslot at comma: left = quarter, right = " 06:18 - 06:40"
-    set "timerange="
     for /f "tokens=1* delims=," %%Q in ("!timeslot!") do (
-      set "timerange=%%R"
+      set "quarter_part=%%Q"
+      set "time_part=%%R"
     )
 
-    rem clean " 06:18 - 06:40" -> "06:18-06:40"
-    set "tr=!timerange!"
-    set "tr=!tr: - =-!"
-
-    rem split start/end around '-'
-    set "start="
-    set "end="
-    for /f "tokens=1,2 delims=-" %%T in ("!tr!") do (
-      set "start=%%T"
-      set "end=%%U"
-    )
-
-    rem parse mm:ss for start/end (spaces and ':' as delimiters)
-    set "sm=" & set "ss=" & set "em=" & set "es="
-    for /f "tokens=1,2 delims= :" %%M in ("!start!") do (
-      set "sm=%%M"
-      set "ss=%%N"
-    )
-    for /f "tokens=1,2 delims= :" %%M in ("!end!") do (
-      set "em=%%M"
-      set "es=%%N"
-    )
-
-    rem time-only patterns
-    set "pattern_time1="
-    if not "!sm!"=="" if not "!ss!"=="" if not "!em!"=="" if not "!es!"=="" (
-      set "pattern_time1=!sm!_!ss!_-_!em!_!es!"
-    )
-
-    rem same but without leading zeros on each component
-    set "sm2=!sm!"
-    set "ss2=!ss!"
-    set "em2=!em!"
-    set "es2=!es!"
-
-    if defined sm2 if "!sm2:~0,1!"=="0" set "sm2=!sm2:~1!"
-    if defined ss2 if "!ss2:~0,1!"=="0" set "ss2=!ss2:~1!"
-    if defined em2 if "!em2:~0,1!"=="0" set "em2=!em2:~1!"
-    if defined es2 if "!es2:~0,1!"=="0" set "es2=!es2:~1!"
-
-    set "pattern_time2="
-    if not "!sm2!"=="" if not "!ss2!"=="" if not "!em2!"=="" if not "!es2!"=="" (
-      set "pattern_time2=!sm2!_!ss2!_-_!em2!_!es2!"
-    )
-
-    echo ID=!id! ^| Timeslot=!timeslot! ^| SetPlay=!setplay!
-    echo   pattern_full  : !pattern_full!
-    if defined pattern_time1 echo   pattern_time1: !pattern_time1!
-    if defined pattern_time2 echo   pattern_time2: !pattern_time2!
-
-    rem ---- ensure destination folder exists ----
-    if not exist "!setplay!" (
-      mkdir "!setplay!" 2>nul
-      if errorlevel 1 (
-        echo   [ERROR] cannot create folder "!setplay!"
-        set /a errors+=1
-      ) else (
-        echo   + Created folder "!setplay!"
-        set /a folders_created+=1
-      )
+    rem if no time_part, skip
+    if "!time_part!"=="" (
+      echo ID=!id! ^| Timeslot=!timeslot! ^| SetPlay=!setplay!
+      echo   (No time range found, skipping)
+      echo.
     ) else (
-      echo   = Folder exists: "!setplay!"
-    )
 
-    rem ---- scan mp4 files and move matches ----
-    set "foundAny="
+      rem ---- build base time pattern (zero-padded) from time_part ----
+      rem Example time_part: " 06:18 - 06:40"
+      rem 1) remove spaces -> "06:18-06:40"
+      rem 2) replace ":" with "_" -> "06_18-06_40"
+      rem 3) replace "-" with "_-_" -> "06_18_-_06_40"
+      set "pattern_time_zpad=!time_part: =!"
+      set "pattern_time_zpad=!pattern_time_zpad::=_!"
+      set "pattern_time_zpad=!pattern_time_zpad:-=_-_!"
 
-    for /f "delims=" %%F in ('dir /b "*.mp4" 2^>nul') do (
-      set "FNAME=%%F"
-      set "hit="
+      rem ---- build non-zero-padded variant pattern_time_noz ----
+      set "pattern_time_noz=!pattern_time_zpad!"
+      set "pattern_time_noz=!pattern_time_noz:_01=_1!"
+      set "pattern_time_noz=!pattern_time_noz:_02=_2!"
+      set "pattern_time_noz=!pattern_time_noz:_03=_3!"
+      set "pattern_time_noz=!pattern_time_noz:_04=_4!"
+      set "pattern_time_noz=!pattern_time_noz:_05=_5!"
+      set "pattern_time_noz=!pattern_time_noz:_06=_6!"
+      set "pattern_time_noz=!pattern_time_noz:_07=_7!"
+      set "pattern_time_noz=!pattern_time_noz:_08=_8!"
+      set "pattern_time_noz=!pattern_time_noz:_09=_9!"
 
-      rem 1) match full timeslot pattern
-      if defined pattern_full (
-        echo "%%F" | find /I "!pattern_full!" >nul && set "hit=1"
+      echo ID=!id! ^| Timeslot=!timeslot! ^| SetPlay=!setplay!
+      echo   pattern_time_zpad: !pattern_time_zpad!
+      echo   pattern_time_noz : !pattern_time_noz!
+
+      rem ---- ensure destination folder exists ----
+      if not exist "!setplay!" (
+        mkdir "!setplay!" 2>nul
+        if errorlevel 1 (
+          echo   [ERROR] cannot create folder "!setplay!"
+          set /a errors+=1
+        ) else (
+          echo   + Created folder "!setplay!"
+          set /a folders_created+=1
+        )
+      ) else (
+        echo   = Folder exists: "!setplay!"
       )
 
-      rem 2) match time-only pattern with zeros
-      if not defined hit if defined pattern_time1 (
-        echo "%%F" | find /I "!pattern_time1!" >nul && set "hit=1"
-      )
+      rem ---- scan mp4 files and move matches ----
+      set "foundAny="
 
-      rem 3) match time-only pattern without leading zeros
-      if not defined hit if defined pattern_time2 (
-        echo "%%F" | find /I "!pattern_time2!" >nul && set "hit=1"
-      )
+      for /f "delims=" %%F in ('dir /b "*.mp4" 2^>nul') do (
+        set "FNAME=%%F"
+        set "hit="
 
-      if defined hit (
-        if exist "%%F" (
-          echo     -> moving "%%F" to "!setplay!\"
-          move /y "%%F" "!setplay!\">nul
-          if errorlevel 1 (
-            echo        [ERROR] failed to move "%%F"
-            set /a errors+=1
-          ) else (
-            set /a files_moved+=1
-            set "foundAny=1"
+        rem 1) match time with leading zeros
+        if not "!pattern_time_zpad!"=="" (
+          echo "%%F" | find /I "!pattern_time_zpad!" >nul && set "hit=1"
+        )
+
+        rem 2) match time without leading zeros (06 -> 6, etc.)
+        if not defined hit if not "!pattern_time_noz!"=="" (
+          echo "%%F" | find /I "!pattern_time_noz!" >nul && set "hit=1"
+        )
+
+        if defined hit (
+          if exist "%%F" (
+            echo     -> moving "%%F" to "!setplay!\"
+            move /y "%%F" "!setplay!\">nul
+            if errorlevel 1 (
+              echo        [ERROR] failed to move "%%F"
+              set /a errors+=1
+            ) else (
+              set /a files_moved+=1
+              set "foundAny=1"
+            )
           )
         )
       )
-    )
 
-    if not defined foundAny (
-      echo   (No MP4 file matched this line)
-    )
+      if not defined foundAny (
+        echo   (No MP4 file matched this line)
+      )
 
-    echo.
+      echo.
+    )
   )
 )
 
