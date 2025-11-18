@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
-echo === Video File Organizer (simple CMD) ===
+echo === Video File Organizer (CMD) ===
 echo.
 
 rem --- verify inputs ---
@@ -25,7 +25,7 @@ set /a errors=0
 echo Processing video_text.txt...
 echo.
 
-rem === main loop: parse each line directly, NO labels, NO call ===
+rem === main loop: parse each line directly ===
 for /f "usebackq tokens=1-3 delims=|" %%A in ("video_text.txt") do (
   set "id=%%A"
   set "timeslot=%%B"
@@ -35,7 +35,7 @@ for /f "usebackq tokens=1-3 delims=|" %%A in ("video_text.txt") do (
   if not "%%C"=="" (
 
     rem ---- split timeslot into quarter and time range ----
-    rem Example: 1st quarter , 01:16 - 01:30
+    rem Example: 1st quarter , 14:19 - 14:46
     set "quarter="
     set "timerange="
 
@@ -44,10 +44,11 @@ for /f "usebackq tokens=1-3 delims=|" %%A in ("video_text.txt") do (
       set "timerange=%%R"
     )
 
-    rem quarter text as-is (used for matching)
-    set "quarter_pattern=!quarter!"
+    rem quarter patterns for matching
+    set "quarter_underscore=!quarter: =_!"
+    set "quarter_nospace=!quarter: =!"
 
-    rem ---- parse timerange " 01:16 - 01:30" into mm ss mm ss ----
+    rem ---- parse timerange " 14:19 - 14:46" into sm ss em es ----
     rem delimiters: space, colon, hyphen
     set "sm="
     set "ss="
@@ -61,19 +62,40 @@ for /f "usebackq tokens=1-3 delims=|" %%A in ("video_text.txt") do (
       set "es=%%K"
     )
 
-    rem Build time pattern 01_16_-_01_30 (no colon substitutions)
-    set "pattern="
+    rem original zero-padded pattern (as in text file)
+    set "pattern1="
     if not "!sm!"=="" if not "!ss!"=="" if not "!em!"=="" if not "!es!"=="" (
-      set "pattern=!sm!_!ss!_-_!em!_!es!"
+      set "pattern1=!sm!_!ss!_-_!em!_!es!"
+    )
+
+    rem trimmed leading zeros pattern (for filenames like 1_16_-_1_30)
+    set "sm2=!sm!"
+    set "ss2=!ss!"
+    set "em2=!em!"
+    set "es2=!es!"
+    if defined sm2 if "!sm2:~0,1!"=="0" set "sm2=!sm2:~1!"
+    if defined ss2 if "!ss2:~0,1!"=="0" set "ss2=!ss2:~1!"
+    if defined em2 if "!em2:~0,1!"=="0" set "em2=!em2:~1!"
+    if defined es2 if "!es2:~0,1!"=="0" set "es2=!es2:~1!"
+
+    set "pattern2="
+    if not "!sm2!"=="" if not "!ss2!"=="" if not "!em2!"=="" if not "!es2!"=="" (
+      set "pattern2=!sm2!_!ss2!_-_!em2!_!es2!"
     )
 
     echo ID=!id! ^| Timeslot=!timeslot! ^| SetPlay=!setplay!
-    if defined pattern (
-      echo   Time pattern : !pattern!
+    if defined pattern1 (
+      echo   Time pattern1: !pattern1!
     ) else (
-      echo   Time pattern : (not parsed)
+      echo   Time pattern1: (not parsed)
     )
-    echo   Quarter text : !quarter_pattern!
+    if defined pattern2 (
+      echo   Time pattern2: !pattern2!
+    ) else (
+      echo   Time pattern2: (not parsed / same as p1)
+    )
+    echo   Quarter "_": !quarter_underscore!
+    echo   Quarter ns: !quarter_nospace!
 
     rem ---- ensure destination folder exists ----
     if not exist "!setplay!" (
@@ -96,12 +118,20 @@ for /f "usebackq tokens=1-3 delims=|" %%A in ("video_text.txt") do (
       set "FNAME=%%F"
       set "hit="
 
-      if defined pattern (
-        echo "%%F" | find /I "!pattern!" >nul && set "hit=1"
+      if defined pattern1 (
+        echo "%%F" | find /I "!pattern1!" >nul && set "hit=1"
       )
 
-      if not defined hit if not "!quarter_pattern!"=="" (
-        echo "%%F" | find /I "!quarter_pattern!" >nul && set "hit=1"
+      if not defined hit if defined pattern2 (
+        echo "%%F" | find /I "!pattern2!" >nul && set "hit=1"
+      )
+
+      if not defined hit if not "!quarter_underscore!"=="" (
+        echo "%%F" | find /I "!quarter_underscore!" >nul && set "hit=1"
+      )
+
+      if not defined hit if not "!quarter_nospace!"=="" (
+        echo "%%F" | find /I "!quarter_nospace!" >nul && set "hit=1"
       )
 
       if defined hit (
